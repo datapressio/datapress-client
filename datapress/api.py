@@ -21,10 +21,10 @@ import os
 #             f.write(lineString)
 #         f.write("]]")
 
-def save_table(nb_name):
-    dataset_id = os.environ['DATASET']
+def commit_table(df):
+    # dataset_id = os.environ['DATASET']
 
-    print('Uploading', nb_name)
+    print('Uploading your dataframe [STUB CODE]', df)
     # import boto3
     #
     # session = boto3.Session(profile_name='boto3')
