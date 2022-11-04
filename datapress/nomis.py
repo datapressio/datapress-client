@@ -5,21 +5,23 @@ TODO document this
 
 
 def nomis_fetch_dataset(dataset, filters, encoding=None):
-    from pandas import read_csv
+    import pandas as pd
+
     page = 1
-    apiUrl = "https://www.nomisweb.co.uk/api/v01/dataset/" + \
+    api_url = "https://www.nomisweb.co.uk/api/v01/dataset/" + \
         dataset + ".data.csv?recordlimit=25000"
 
     for (attr, value) in filters.items():
-        apiUrl = apiUrl + "&" + attr + "=" + value
-    res = read_csv(apiUrl, header=0, encoding=encoding)
-    frame = res
+        api_url = api_url + "&" + attr + "=" + value
+    res = pd.read_csv(api_url, header=0, encoding=encoding)
+    df = res
     while (len(res) == 25000):
-        url = apiUrl+"&recordoffset=" + str(25000 * page)
-        res = read_csv(url, header=0, encoding=encoding)
+        url = api_url+"&recordoffset=" + str(25000 * page)
+        res = pd.read_csv(url, header=0, encoding=encoding)
         page += 1
-        frame = frame.append(res)
-    return frame
+        df = pd.concat([df, res])
+
+    return df
 
 # return dataset with just list of geographies and values
 
