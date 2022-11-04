@@ -37,8 +37,8 @@ def nomis_geography(df, title="Value"):
 
 
 def nomis_years(df, title="Value"):
-    df = df[['YEAR_NAME', 'OBS_VALUE']]
+    df = df[['DATE_NAME', 'OBS_VALUE']]
     df = df.dropna()
-    df = df.rename(columns={"YEAR_NAME": "Year", "OBS_VALUE": title})
+    df = df.rename(columns={"DATE_NAME": "Year", "OBS_VALUE": title})
 
     return df
