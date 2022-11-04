@@ -13,3 +13,10 @@ def extract_data_from_excel(spreadsheet, sheet, header):
     frame.columns = headers
     return frame
 
+
+def get_datapress_file(site, dataset, resource):
+    import requests
+    import pandas as pd
+
+    xl = requests.get(site + '/download/' + dataset + '/' + resource)
+    return pd.read_excel(xl.content)
