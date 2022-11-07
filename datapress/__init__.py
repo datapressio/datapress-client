@@ -1,12 +1,10 @@
 """
 datapress_client
-~~~~~~
 
-DataPress API client.
+DataPress API client and utilities.
 """
 
-from .api import *
+from .script import *
 from .nomis import *
 from .extract import *
 from .geo import *
-

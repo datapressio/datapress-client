@@ -14,7 +14,7 @@ setup(
     description='DataPress API client',
     long_description=readme,
     long_description_content_type='text/markdown',
-    version='0.1.0',
+    version='0.1.1',
     author='DataPress Ltd.',
     author_email='admin@datapress.com',
     url='https://github.com/datapressio/datapress-client',
