@@ -62,8 +62,6 @@ class ScriptClient:
             missing.append('DATAPRESS_API_KEY')
         if os.environ.get('DATAPRESS_DATASET') is None:
             missing.append('DATAPRESS_DATASET')
-        if os.environ.get('DATAPRESS_SCRIPT') is None:
-            missing.append('DATAPRESS_SCRIPT')
         return missing
 
     @staticmethod
@@ -115,7 +113,6 @@ class ScriptClient:
         Uses environment variables:
         * DATAPRESS_URL
         * DATAPRESS_API_KEY
-        * DATAPRESS_SCRIPT
         * DATAPRESS_DATASET
 
         Scripts deployed to DataPress should rely entirely on environment variables.
@@ -130,7 +127,6 @@ class ScriptClient:
         self.site_url = os.environ['DATAPRESS_URL']
         self.api_key = os.environ['DATAPRESS_API_KEY']
         self.dataset_id = os.environ['DATAPRESS_DATASET']
-        self.script_id = os.environ['DATAPRESS_SCRIPT']
         # ---
         # Check the connection
         context = requests.get(self.site_url + '/api/context', headers={
@@ -138,7 +134,7 @@ class ScriptClient:
         })
         if (context.status_code != 200):
             raise Exception(
-                f'Error connecting to DataPress: {r.status_code}')
+                f'Error connecting to DataPress: {context.status_code}')
         if context.json().get('user') is None and self.api_key is not None:
             raise Exception('Unrecognised API Key')
         # ---
@@ -146,10 +142,10 @@ class ScriptClient:
         # ---
         dataset = self.get_dataset()
         # Load the script
-        if not self.script_id in dataset['scripts']:
-            raise Exception(f'Script not found: {self.script_id}')
-        logger.info('Connected to DataPress / dataset=%s / script=%s',
-                    self.dataset_id, self.script_id)
+        if not 'script' in dataset:
+            raise Exception('Dataset does not contain a script')
+        logger.info('Connected to DataPress / dataset=%s',
+                    self.dataset_id)
 
     def get_dataset(self):
         r = requests.get(self.site_url + '/api/dataset/' + self.dataset_id, headers={
@@ -200,7 +196,12 @@ class ScriptClient:
         (Indexed by filename and also by resource ID).
         """
         dataset = self.get_dataset()  #  Always refreshing this
-        resource_ids = dataset['scripts'][self.script_id]['resources']
+
+        # There is a dict on dataset['resources'].
+        # Get all the dict keys where the value is an object which has attachment=False
+        resource_ids = [k for k, v in dataset['resources'].items()
+                        if v['attachment'] == False]
+
         dfz = {}
         for (i, id) in enumerate(resource_ids):
             url = dataset['resources'][id]['url']
@@ -226,7 +227,7 @@ class ScriptClient:
             raise ValueError('Invalid type: %s' % type)
 
         # Request a presigned upload from the website, at
-        # /api/dataset/:id/presign/script/:script_id/table/:table_id
+        # /api/dataset/:id/presign/script/table/:table_id
         presign_url = '/'.join([
             self.site_url,
             'api',
@@ -234,7 +235,6 @@ class ScriptClient:
             self.dataset_id,
             'presign',
             'script',
-            self.script_id,
             type,
             name,
         ])
@@ -270,7 +270,7 @@ class ScriptClient:
         """
         # Fetch the dataset metadata
         dataset = self.get_dataset()
-        tables = dataset['scripts'][self.script_id]['tables']
+        tables = dataset['script']['tables']
         csv_data = df.to_csv(index=False).encode('utf-8')
 
         # Deduplicate
@@ -286,7 +286,7 @@ class ScriptClient:
         csv_key = self._commit_csv(csv_data, name, 'table')
 
         # Fetch the dataset metadata
-        path = "/scripts/" + self.script_id + "/tables/" + name
+        path = "/script/tables/" + name
         if name not in tables:
             logger.info('Creating table "%s" on the dataset', name)
             patch = [
@@ -323,7 +323,7 @@ class ScriptClient:
         """
         # Refresh the dataset metadata
         dataset = self.get_dataset()
-        charts = dataset['scripts'][self.script_id]['charts']
+        charts = dataset['script']['charts']
         csv_data = df.to_csv(index=False).encode('utf-8')
 
         # Deduplicate
@@ -341,7 +341,7 @@ class ScriptClient:
 
         csv_key = self._commit_csv(csv_data, name, 'chart')
 
-        path = "/scripts/" + self.script_id + "/charts/" + name
+        path = "/script/charts/" + name
         if name not in charts:
             logger.info('Creating chart "%s" on the dataset', name)
             patch = [
