@@ -5,13 +5,19 @@ import requests
 import dotenv
 import hashlib
 import pandas as pd
-from pprint import pprint
+import io
+import json
+import sys
 
 logger = logging.getLogger(__name__)
 
 # Set the logging level by environment variable
-logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"),
+logging_level = os.environ.get('LOGLEVEL', 'INFO') or 'INFO'
+logging.basicConfig(level=logging_level,
                     format='%(levelname)s %(message)s')
+# Send INFO logs to stdout, not stderr
+logging.getLogger().handlers[0].stream = sys.stdout
+logger.info('LOGLEVEL=' + logging_level)
 
 # Cached instance of ScriptClient for this script run
 _client = None
@@ -48,6 +54,19 @@ class ScriptClient:
     # Internal static methods
     # ----------------------
     @staticmethod
+    def _get_missing_env_vars():
+        missing = []
+        if os.environ.get('DATAPRESS_URL') is None:
+            missing.append('DATAPRESS_URL')
+        if os.environ.get('DATAPRESS_API_KEY') is None:
+            missing.append('DATAPRESS_API_KEY')
+        if os.environ.get('DATAPRESS_DATASET') is None:
+            missing.append('DATAPRESS_DATASET')
+        if os.environ.get('DATAPRESS_SCRIPT') is None:
+            missing.append('DATAPRESS_SCRIPT')
+        return missing
+
+    @staticmethod
     def _get_script_path():
         """
         Get the path to the script that is running this code.
@@ -59,7 +78,13 @@ class ScriptClient:
             if '__vsc_ipynb_file__' in frame.frame.f_globals:
                 return frame.frame.f_globals['__vsc_ipynb_file__']
         # Huh, not in VSCode. Try to get the path from the stack trace
-        return os.path.abspath(inspect.stack()[1].filename)
+        # Walk through the stack from the bottom up
+        for frame in reversed(inspect.stack()):
+            # Get the filename from the frame
+            filename = frame.filename
+            # If it's not this file, then it's the script that called this file
+            if filename != __file__ and filename.endswith('.py'):
+                return os.path.abspath(filename)
 
     @staticmethod
     def _load_all_dotenvs():
@@ -96,16 +121,9 @@ class ScriptClient:
         Scripts deployed to DataPress should rely entirely on environment variables.
         """
         # Fetch the env vars
-        ScriptClient._load_all_dotenvs()
-        missing = []
-        if os.environ.get('DATAPRESS_URL') is None:
-            missing.append('DATAPRESS_URL')
-        if os.environ.get('DATAPRESS_API_KEY') is None:
-            missing.append('DATAPRESS_API_KEY')
-        if os.environ.get('DATAPRESS_DATASET') is None:
-            missing.append('DATAPRESS_DATASET')
-        if os.environ.get('DATAPRESS_SCRIPT') is None:
-            missing.append('DATAPRESS_SCRIPT')
+        if ScriptClient._get_missing_env_vars():
+            ScriptClient._load_all_dotenvs()
+        missing = ScriptClient._get_missing_env_vars()
         if missing:
             raise ValueError(f'Missing environment variables: {missing}')
         # --
@@ -149,12 +167,27 @@ class ScriptClient:
             raise ValueError(
                 f'Dataset does not contain resource {resource_id}')
         url = dataset['resources'][resource_id]['url']
+        logger.debug('Loading resource %s from %s', resource_id, url)
         extension = os.path.splitext(url.lower())[1]
+        # --
+        r = requests.get(url + '?redirect=true', headers={
+            'Authorization': self.api_key
+        })
+        if (r.status_code != 200):
+            print(r.status_code)
+            # If the response is json, print it
+            try:
+                # format the JSON nicely
+                print(json.dumps(r.json(), indent=2))
+            except:
+                print(r.text)
+            raise Exception(
+                f'Error downloading resource from {url}: {r.status_code}')
         # Open a pandas dataframe:
         if extension == '.xlsx' or extension == '.xls':
-            return pd.read_excel(url + '?redirect=true')
+            return pd.read_excel(io.BytesIO(r.content))
         elif extension == '.csv':
-            return pd.read_csv(url + '?redirect=true')
+            return pd.read_csv(io.StringIO(r.text))
         else:
             # Unrecognised file type
             return None

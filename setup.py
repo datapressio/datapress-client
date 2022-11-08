@@ -3,6 +3,11 @@
 import os
 from setuptools import setup, find_packages
 
+here = os.path.abspath(os.path.dirname(__file__))
+about = {}
+with open(os.path.join(here, 'datapress', '__version__.py')) as f:
+    exec(f.read(), about)
+
 # load the README file and use it as the long_description for PyPI
 with open('README.md', 'r') as f:
     readme = f.read()
@@ -14,7 +19,7 @@ setup(
     description='DataPress API client',
     long_description=readme,
     long_description_content_type='text/markdown',
-    version='0.1.1',
+    version=about['__version__'],
     author='DataPress Ltd.',
     author_email='admin@datapress.com',
     url='https://github.com/datapressio/datapress-client',
