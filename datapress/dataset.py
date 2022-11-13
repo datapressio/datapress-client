@@ -190,9 +190,9 @@ class Dataset:
         tables = self.json['script']['tables']
         csv_data = df.to_csv(index=False).encode('utf-8')
 
-        # Get the first 10 rows and the first 40 columns
+        # Get the first 100 rows and the first 40 columns
         csv_sample_data = df[df.columns[:40]].head(
-            10).to_csv(index=False).encode('utf-8')
+            100).to_csv(index=False).encode('utf-8')
         column_metadata = _get_column_metadata(df)
 
         # Deduplicate
