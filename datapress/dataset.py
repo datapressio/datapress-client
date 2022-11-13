@@ -5,6 +5,7 @@ import hashlib
 import pandas as pd
 import io
 from . import api
+from . import utils
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,28 @@ def get_dataset(id=None):
             'No dataset id provided, and DATAPRESS_DATASET not set')
     # --
     return Dataset(id)
+
+
+def _get_column_type(t):
+    """Simplify column types to a few basic types"""
+    if t == 'int64' or t == 'float64':
+        return 'number'
+    if str(t).startswith('datetime'):
+        return 'datetime'
+    return 'string'
+
+
+def _get_column_metadata(df):
+    df = df.head(10)
+    out = []
+    # Get the first 40 columns (that should be enough)
+    for col_name in df.columns[:40]:
+        col_type = _get_column_type(df[col_name].dtype)
+        out.append({
+            'name': col_name[:255],
+            'type': str(col_type),
+        })
+    return out
 
 
 # ----------------------
@@ -118,7 +141,7 @@ class Dataset:
         """
         Private method: Upload a table or chart via a pre-signed link
         """
-        assert type in ['table', 'chart']
+        assert type in ['table', 'chart', 'table.sample']
 
         # Request a presigned upload from the website, at
         # /api/dataset/:id/presign/script/table/:table_id
@@ -159,9 +182,18 @@ class Dataset:
         Upload a table to DataPress.
         Provide a kebab-case-name for the table, and a pandas dataframe.
         """
+        if utils.check_key_for_errors(name) is not None:
+            raise Exception('Invalid table name: "' + name +
+                            '": ' + utils.check_key_for_errors(name))
+
         self.refresh()
         tables = self.json['script']['tables']
         csv_data = df.to_csv(index=False).encode('utf-8')
+
+        # Get the first 10 rows and the first 40 columns
+        csv_sample_data = df[df.columns[:40]].head(
+            10).to_csv(index=False).encode('utf-8')
+        column_metadata = _get_column_metadata(df)
 
         # Deduplicate
         if name in tables:
@@ -174,6 +206,8 @@ class Dataset:
         logger.info('Uploading table: "%s"', name)
 
         csv_key = self._commit_csv(csv_data, name, 'table')
+        csv_sample_key = self._commit_csv(
+            csv_sample_data, name, 'table.sample')
 
         # Fetch the dataset metadata
         path = "/script/tables/" + name
@@ -183,16 +217,26 @@ class Dataset:
                 {   # Add the table
                     "op": "add",
                     "path": path,
-                    "value": {'csv': csv_key}
+                    "value": {'csv': csv_key, 'csvSample': csv_sample_key, 'columns': column_metadata}
                 }
             ])
         else:
             logger.info('Updating table "%s" on the dataset', name)
             api.patch('/api/dataset/' + self.id, json=[
                 {   # Update the script's table key on DataPress
-                    "op": "replace",
+                    "op": "add",
                     "path": path + '/csv',
                     "value": csv_key
+                },
+                {
+                    "op": "add",
+                    "path": path + '/csvSample',
+                    "value": csv_sample_key
+                },
+                {
+                    "op": "add",
+                    "path": path + '/columns',
+                    "value": column_metadata
                 }
             ])
 
@@ -203,6 +247,10 @@ class Dataset:
         Provide a kebab-case-name for the table, and a pandas dataframe.
         The output CSV must be under 100kb.
         """
+        if utils.check_key_for_errors(name) is not None:
+            raise Exception('Invalid chart name: "' + name +
+                            '": ' + utils.check_key_for_errors(name))
+
         self.refresh()
         charts = self.json['script']['charts']
         csv_data = df.to_csv(index=False).encode('utf-8')
@@ -237,7 +285,7 @@ class Dataset:
             logger.info('Updating chart "%s" on the dataset', name)
             api.patch('/api/dataset/' + self.id, [
                 {
-                    "op": "replace",
+                    "op": "add",
                     "path": path + '/csv',
                     "value": csv_key
                 }
