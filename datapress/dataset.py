@@ -217,7 +217,12 @@ class Dataset:
                 {   # Add the table
                     "op": "add",
                     "path": path,
-                    "value": {'csv': csv_key, 'csvSample': csv_sample_key, 'columns': column_metadata}
+                    "value": {
+                        'csv': csv_key,
+                        'csvSample': csv_sample_key,
+                        'columns': column_metadata,
+                        'rowCount': len(df),
+                    }
                 }
             ])
         else:
@@ -237,6 +242,11 @@ class Dataset:
                     "op": "add",
                     "path": path + '/columns',
                     "value": column_metadata
+                },
+                {
+                    "op": "add",
+                    "path": path + '/rowCount',
+                    "value": len(df),
                 }
             ])
 
