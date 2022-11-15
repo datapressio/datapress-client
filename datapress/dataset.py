@@ -19,6 +19,10 @@ logging.basicConfig(level=logging_level,
 # ----------------------
 
 
+def no_cache():
+    return os.environ.get('DATAPRESS_NO_CACHE', 'false').lower() == 'true'
+
+
 def get_dataset(id=None):
     env_dataset = os.environ.get('DATAPRESS_DATASET', None)
     if (env_dataset is not None and id is not None and env_dataset != id):
@@ -200,8 +204,13 @@ class Dataset:
             old_hash = tables[name]['csvHash']
             new_hash = hashlib.md5(csv_data).hexdigest()
             if old_hash == new_hash:
-                logger.info('Skipping table: "%s" (CSV is unchanged)', name)
-                return
+                if no_cache():
+                    logger.info(
+                        'Overwriting table: "%s" (CSV is unchanged, NO_CACHE=true)', name)
+                else:
+                    logger.info(
+                        'Skipping table: "%s" (CSV is unchanged)', name)
+                    return
 
         logger.info('Uploading table: "%s"', name)
 
@@ -270,8 +279,13 @@ class Dataset:
             old_hash = charts[name]['csvHash']
             new_hash = hashlib.md5(csv_data).hexdigest()
             if old_hash == new_hash:
-                logger.info('Skipping chart: "%s" (CSV is unchanged)', name)
-                return
+                if no_cache():
+                    logger.info(
+                        'Overwriting chart: "%s" (CSV is unchanged, NO_CACHE=true)', name)
+                else:
+                    logger.info(
+                        'Skipping chart: "%s" (CSV is unchanged)', name)
+                    return
 
         # Verify we can chart this at all
         logger.info('Uploading chart: "%s"', name)
