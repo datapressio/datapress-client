@@ -33,3 +33,14 @@ def get_geography_code(place):
     frame = pd.read_csv(filename)
     frame = frame[frame['UTLA19NM'] == place]
     return frame['UTLA19CD'].unique().tolist()
+
+
+def get_region(place):
+    filename = os.path.join(DIRNAME, 'static', 'lsoa_lookup.csv')
+    frame = pd.read_csv(filename)
+    frame = frame[frame['UTLA19NM'] == place]
+    regions = frame['RGN11CD'].unique().tolist()
+    # This should really only return one region, but just in case...
+    if len(regions) > 1:
+        raise Exception("More than one region found for " + place)
+    return regions[0]
