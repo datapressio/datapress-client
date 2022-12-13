@@ -95,7 +95,12 @@ class Dataset:
         origin = self.json['resources'][resource_id]['origin']
         extension = os.path.splitext(origin.lower())[1]
         if extension == '.xlsx' or extension == '.xls':
-            return pd.read_excel(io.BytesIO(r.content))
+            xls = pd.ExcelFile(io.BytesIO(r.content))
+            out = {}
+            for sheet in xls.sheet_names:
+                # add the sheet to out
+                out[sheet] = pd.read_excel(xls, sheet)
+            return out
         elif extension == '.csv':
             return pd.read_csv(io.StringIO(r.text))
         else:
