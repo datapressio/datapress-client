@@ -103,6 +103,13 @@ class Dataset:
             return out
         elif extension == '.csv':
             return pd.read_csv(io.StringIO(r.text))
+        elif extension == '.ods':
+            xls = pd.ExcelFile(io.BytesIO(r.content))
+            out = {}
+            for sheet in xls.sheet_names:
+                # add the sheet to out
+                out[sheet] = pd.read_excel(xls, sheet, engine='odf')
+            return out
         else:
             # Unrecognised file type
             return None
