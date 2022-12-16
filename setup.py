@@ -32,6 +32,7 @@ setup(
         'xlrd',
         'openpyxl',
         'python-dotenv',
+        'odfpy',
     ],
     license='Apache 2.0',
     zip_safe=False,
