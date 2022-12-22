@@ -102,7 +102,7 @@ class Dataset:
                 out[sheet] = pd.read_excel(xls, sheet)
             return out
         elif extension == '.csv':
-            return pd.read_csv(io.StringIO(r.text))
+            return pd.read_csv(io.StringIO(r.text), on_bad_lines='warn')
         elif extension == '.ods':
             xls = pd.ExcelFile(io.BytesIO(r.content))
             out = {}
