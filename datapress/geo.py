@@ -87,6 +87,8 @@ def get_geographies_of(place, type, type_of_place=None):
             type = 'CTRY11CD'
         case 'country':
             type = 'CTRY11NM'
+        case 'nomis codes':
+            type = 'NOMISCD'
 
     filename = os.path.join(DIRNAME, 'static', 'lsoa_lookup.csv')
     frame = pd.read_csv(filename)
