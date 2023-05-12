@@ -187,8 +187,9 @@ class Dataset:
         # }
 
         # Upload the file to the one-time URL
-        logger.debug('POST %s', presign['url'])
-        requests.post(presign['url'], data=presign['fields'], files={
+        url = presign['url'] + presign['fields']['bucket']
+        logger.debug('POST %s', url)
+        requests.post(url, data=presign['fields'], files={
             'file': csv_data
         })
         return presign['fields']['key']
