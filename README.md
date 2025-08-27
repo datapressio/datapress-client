@@ -1,6 +1,6 @@
 # DataPress Python Client
 
-A Python client library for interacting with the DataPress API.
+A Python client library for interacting with the [DataPress API](https://datapress.com/docs/api).
 
 ## Installation
 
