@@ -60,7 +60,7 @@ class DataPressClient:
 
         self.session = requests.Session()
         self.session.headers.update(
-            {"Authorization": self.api_key, "User-Agent": "datapress-python/1.0.0"}
+            {"Authorization": self.api_key, "User-Agent": "datapress-python/1.0.1"}
         )
 
     def _request(self, method: str, path: str, **kwargs) -> requests.Response:

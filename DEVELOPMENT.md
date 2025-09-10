@@ -75,3 +75,8 @@ Upload a file to a dataset using chunked uploads. All files are uploaded in 5MB 
 #### `download_file(dataset_id, resource_id)`
 
 Download a file from a dataset resource with authentication.
+
+## Deployment to pypi
+
+python3 -m build
+python -m twine upload dist/*

@@ -6,8 +6,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="datapress-client",
-    version="1.0.0",
+    name="datapress",
+    version="1.0.1",
     author="DataPress",
     description="Python client library for the DataPress API",
     long_description=long_description,

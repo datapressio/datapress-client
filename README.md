@@ -5,7 +5,7 @@ A Python client library for interacting with the [DataPress API](https://datapre
 ## Installation
 
 ```bash
-pip install datapress-client
+pip install datapress
 ```
 
 ## How to Use
