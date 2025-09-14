@@ -2,9 +2,11 @@
 
 import os
 import tempfile
-import pytest
 from pathlib import Path
+
+import pytest
 from dotenv import load_dotenv
+
 from datapress import DataPressClient
 
 # Load test environment variables

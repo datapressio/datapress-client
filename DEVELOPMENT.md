@@ -34,7 +34,7 @@ black datapress/ tests/
 # Sort imports
 isort datapress/ tests/
 
-# Type checking
+# Type checking, although the results look very poor if you're coming from Typescript.
 mypy datapress/
 ```
 

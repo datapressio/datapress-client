@@ -2,11 +2,12 @@
 DataPress client for Python.
 """
 
-import os
-import requests
-from typing import Optional, Dict, Any, Union, List
-from pathlib import Path
 import math
+import os
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
+import requests
 
 
 class DataPressError(Exception):
@@ -60,7 +61,7 @@ class DataPressClient:
 
         self.session = requests.Session()
         self.session.headers.update(
-            {"Authorization": self.api_key, "User-Agent": "datapress-python/1.0.1"}
+            {"Authorization": self.api_key, "User-Agent": "datapress-python/1.1.0"}
         )
 
     def _request(self, method: str, path: str, **kwargs) -> requests.Response:
@@ -130,6 +131,7 @@ class DataPressClient:
         title: Optional[str] = None,
         description: Optional[str] = None,
         order: Optional[int] = None,
+        timeframe: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """
         Upload a file to a dataset using chunked uploads.
@@ -141,6 +143,7 @@ class DataPressClient:
             title: Optional title for the file
             description: Optional description for the file
             order: Optional position in the dataset file list
+            timeframe: Optional dict with 'from' and 'to' string keys for date range
 
         Returns:
             Dict containing the upload response with dataset info and new resource details.
@@ -168,6 +171,8 @@ class DataPressClient:
             create_payload["description"] = description
         if order is not None:
             create_payload["order"] = order
+        if timeframe:
+            create_payload["timeframe"] = timeframe
 
         create_response = self._request(
             "POST", f"/api/v3/dataset/{dataset_id}/upload", json=create_payload

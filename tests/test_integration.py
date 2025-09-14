@@ -8,9 +8,11 @@ These tests run against a real DataPress instance and require environment variab
 The tests run sequentially as they depend on each other's state.
 """
 
+from pathlib import Path
+
 import pytest
 import requests
-from pathlib import Path
+
 from datapress.client import AuthenticationError
 
 
@@ -194,6 +196,31 @@ class TestFileUploadSequence:
         # Store the large file resource_id for cleanup
         TestFileUploadSequence.large_file_resource_id = result["resource_id"]
 
+    def test_06_upload_with_timeframe(self, client, test_config, temp_csv_file):
+        """Test uploading a file with timeframe parameter."""
+        timeframe = {"from": "2024-01", "to": "2025-04"}
+
+        result = client.upload_file(
+            dataset_id=test_config["dataset_id"],
+            file_path=temp_csv_file,
+            title="Test CSV with Timeframe",
+            description="Test file with timeframe",
+            timeframe=timeframe,
+        )
+
+        assert "resource_id" in result
+        assert "dataset" in result
+
+        # Verify the file appears in dataset with correct timeframe
+        resource_id = result["resource_id"]
+        resource = result["dataset"]["resources"][resource_id]
+        assert resource["title"] == "Test CSV with Timeframe"
+        assert resource["description"] == "Test file with timeframe"
+        assert resource["timeframe"] == timeframe
+
+        # Store the timeframe file resource_id for cleanup
+        TestFileUploadSequence.timeframe_resource_id = result["resource_id"]
+
 
 @pytest.mark.order(2)
 class TestCleanup:
@@ -220,6 +247,13 @@ class TestCleanup:
         ):
             if TestFileUploadSequence.large_file_resource_id in dataset["resources"]:
                 resource_ids_to_remove.append(TestFileUploadSequence.large_file_resource_id)
+
+        if (
+            hasattr(TestFileUploadSequence, "timeframe_resource_id")
+            and TestFileUploadSequence.timeframe_resource_id
+        ):
+            if TestFileUploadSequence.timeframe_resource_id in dataset["resources"]:
+                resource_ids_to_remove.append(TestFileUploadSequence.timeframe_resource_id)
 
         # Remove each resource using patch operations
         for resource_id in resource_ids_to_remove:

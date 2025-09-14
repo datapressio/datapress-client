@@ -1,9 +1,11 @@
 """Unit tests for DataPress client."""
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
+
 from datapress import DataPressClient
-from datapress.client import DataPressError, AuthenticationError, NotFoundError, PermissionError
+from datapress.client import AuthenticationError, DataPressError, NotFoundError, PermissionError
 
 
 class TestClientInitialization:

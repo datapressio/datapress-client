@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="datapress",
-    version="1.0.1",
+    version="1.1.0",
     author="DataPress",
     description="Python client library for the DataPress API",
     long_description=long_description,
