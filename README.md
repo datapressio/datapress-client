@@ -50,8 +50,11 @@ print(f"Dataset renamed to: {result['dataset']['title']}")
 result = client.upload_file(
     dataset_id="ab12x",
     file_path="data/sales.csv",
+    # Optional parameters:
     title="Sales Data",
-    description="Monthly sales figures"
+    description="Monthly sales figures",
+    order=1,
+    timeframe={"from": "2024-01", "to": "2025-04"}
 )
 print(f"File uploaded with ID: {result['resource_id']}")
 ```
@@ -63,6 +66,7 @@ print(f"File uploaded with ID: {result['resource_id']}")
 result = client.upload_file(
     dataset_id="ab12x",
     file_path="data/updated_spending.csv",
+    # Optional parameters:
     resource_id="xyz",  # ID of existing file to replace
     title="Updated Spending Data"
 )
