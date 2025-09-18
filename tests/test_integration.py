@@ -12,6 +12,8 @@ from pathlib import Path
 
 import pytest
 import requests
+import boto3
+import os
 
 from datapress.client import AuthenticationError
 
@@ -221,6 +223,44 @@ class TestFileUploadSequence:
         # Store the timeframe file resource_id for cleanup
         TestFileUploadSequence.timeframe_resource_id = result["resource_id"]
 
+    def test_07_upload_from_s3(self, client, test_config):
+        """Test uploading JPG directly from DigitalOcean Spaces using upload_file_from_s3."""
+        # Create boto3 client for DigitalOcean Spaces
+        session = boto3.session.Session()
+        s3_client = session.client(
+            "s3",
+            region_name="lon1",
+            endpoint_url="https://lon1.digitaloceanspaces.com",
+            aws_access_key_id=os.getenv("SPACES_TEST_KEY"),
+            aws_secret_access_key=os.getenv("SPACES_TEST_SECRET"),
+        )
+
+        # Upload directly from S3
+        bucket = "datapress3-files"
+        key = "hogwarts/datapress_client_test.jpg"
+
+        result = client.upload_file_from_s3(
+            s3_client=s3_client,
+            bucket=bucket,
+            key=key,
+            dataset_id=test_config["dataset_id"],
+            title="Hogwarts Test Image",
+            description="Test JPG uploaded directly from DigitalOcean Spaces",
+        )
+
+        assert "resource_id" in result
+        assert "dataset" in result
+
+        # Verify file appears in dataset
+        resource_id = result["resource_id"]
+        resource = result["dataset"]["resources"][resource_id]
+        assert resource["title"] == "Hogwarts Test Image"
+        assert resource["format"] == "image"
+        assert resource["size"] > 1000000  # Should be a substantial JPG file
+
+        # Store the JPG file resource_id for cleanup
+        TestFileUploadSequence.jpg_resource_id = result["resource_id"]
+
 
 @pytest.mark.order(2)
 class TestCleanup:
@@ -254,6 +294,13 @@ class TestCleanup:
         ):
             if TestFileUploadSequence.timeframe_resource_id in dataset["resources"]:
                 resource_ids_to_remove.append(TestFileUploadSequence.timeframe_resource_id)
+
+        if (
+            hasattr(TestFileUploadSequence, "jpg_resource_id")
+            and TestFileUploadSequence.jpg_resource_id
+        ):
+            if TestFileUploadSequence.jpg_resource_id in dataset["resources"]:
+                resource_ids_to_remove.append(TestFileUploadSequence.jpg_resource_id)
 
         # Remove each resource using patch operations
         for resource_id in resource_ids_to_remove:
