@@ -28,6 +28,7 @@ setup(
     python_requires=">=3.8",
     install_requires=[
         "requests>=2.25.0",
+        "boto3",
     ],
     extras_require={
         "dev": [
@@ -38,7 +39,6 @@ setup(
             "isort",
             "mypy",
             "python-dotenv",
-            "boto3",
         ],
     },
 )
