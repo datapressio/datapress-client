@@ -10,6 +10,7 @@ import boto3
 import json
 
 import requests
+from requests.adapters import HTTPAdapter, Retry
 
 
 class DataPressError(Exception):
@@ -65,6 +66,17 @@ class DataPressClient:
         self.session.headers.update(
             {"Authorization": self.api_key, "User-Agent": "datapress-python/1.2.0"}
         )
+
+        # Configure retry strategy with exponential backoff
+        retries = Retry(
+            total=5,
+            backoff_factor=0.5,
+            status_forcelist=[500, 502, 503, 504],
+            raise_on_status=False
+        )
+        adapter = HTTPAdapter(max_retries=retries)
+        self.session.mount('http://', adapter)
+        self.session.mount('https://', adapter)
 
     def _request(self, method: str, path: str, **kwargs) -> requests.Response:
         """Make an HTTP request to the API."""
