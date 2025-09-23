@@ -64,7 +64,7 @@ class DataPressClient:
 
         self.session = requests.Session()
         self.session.headers.update(
-            {"Authorization": self.api_key, "User-Agent": "datapress-python/1.2.0"}
+            {"Authorization": self.api_key, "User-Agent": "datapress-python/1.3.0"}
         )
 
         # Configure retry strategy with exponential backoff
